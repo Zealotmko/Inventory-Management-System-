@@ -1,0 +1,553 @@
+
+Inventory-Management-System   Creat with Visual Basic Program  :)   
+
+'To set border styles for Excel
+Private Enum ExlBorderAround
+xlHairline = 1
+xlMedium = -4138
+xlThick = 4
+xlThin = 2
+xlColorIndexAutomatic = -4105
+End Enum
+Private Sub CmdEnd_Click()
+End
+End Sub
+
+
+
+Private Sub CmdConvert_Click()
+Dim hex_val As String
+Dim trueVal As Double
+
+hex_val = AdoStock.Recordset.Fields("TCost")
+trueVal = CInt("&H" & hex_val) 'To convert hexadecimal to decimal value
+Text1.Text = Str(trueVal)
+End Sub
+
+Private Sub CmdCpu_Click()
+
+Dim CostPU As String
+
+CostPU = InputBox("Enter Unit Cost")
+AdoStock.Recordset.Fields("CPU") = Str(Val(CostPU))
+
+
+AdoStock.Recordset.Fields("TCost") = Str(Val(AdoStock.Recordset.Fields("Out")) * Val(CostPU))
+
+AdoInventory.Recordset.Update
+AdoStock.Recordset.Update
+
+End Sub
+
+Private Sub CmdDo_Click()
+'To sum up all the values in column 9
+Dim mysum As Double
+Dim nrow As Integer
+Dim r As Integer
+
+nrow = MSFlexGrid1.Rows 'To count all the rows in MSFlexiGrid1
+For r = 0 To nrow - 1
+mysum = mysum + Val(MSFlexGrid1.TextMatrix(r, 9))
+Next
+
+Text1.Text = Str(mysum)
+'To add last line to Flexigrid table that shows total cost
+MSFlexGrid1.AddItem "" & vbTab & "" & vbTab & "" & vbTab & "" & vbTab & "" _
+& vbTab & "" & vbTab & "" & vbTab & "" & vbTab & "Total Cost" & vbTab & Str(mysum)
+
+'Printing Delivery order Via Excel
+
+
+
+Dim ObjExcel As Object
+Dim wbk As Object
+Dim wst As Object
+Dim i%
+Dim myrow, mycol, noofusedrows As Integer
+
+
+Set ObjExcel = CreateObject("Excel.Application")
+Set wbk = ObjExcel.Workbooks.Add
+Set wst = wbk.ActiveSheet
+
+'This Adds a new workbook, you could open the workbook from file also
+
+Clipboard.Clear 'Clear the Clipboard
+With MSFlexGrid1
+'Select Full Contents (You could also select partial content)
+.Col = 0 'From first column
+.Row = 0 'From first Row (header)
+.ColSel = .Cols - 1 'Select all columns
+.RowSel = .Rows - 1 'Select all rows
+Clipboard.SetText .Clip 'Send to Clipboard
+End With
+
+With ObjExcel.Application.ActiveSheet
+
+.Range("A1").EntireColumn.Columnwidth = 8 'Set Columnwidth for column1=10
+.Range("B1").EntireColumn.Columnwidth = 10
+.Range("C1").EntireColumn.Columnwidth = 8
+.Range("D1").EntireColumn.Columnwidth = 10
+.Range("E1").EntireColumn.Columnwidth = 12
+.Range("F1").EntireColumn.Columnwidth = 4
+.Range("G1").EntireColumn.Columnwidth = 4
+.Range("H1").EntireColumn.Columnwidth = 6
+.Range("I1").EntireColumn.Columnwidth = 10
+.Range("J1").EntireColumn.Columnwidth = 6
+.Range("F1").EntireColumn.HorizontalAlignment = 2
+.Range("G1").EntireColumn.HorizontalAlignment = 2
+
+
+
+
+.Range("A1").Select 'Select Cell A1 (will paste from here, to different cells)
+.Paste 'Paste clipboard contents
+
+
+noofusedrows = wst.UsedRange.Rows.Count 'To get number of used rows
+
+'To set borders for the selected cells
+For myrow = 2 To noofusedrows
+For mycol = 1 To 10
+
+wst.Cells(myrow, mycol).BorderAround , ExlBorderAround.xlThin, ExlBorderAround.xlColorIndexAutomatic, vbBlack
+Next
+Next
+'To set borders for the last row
+wst.Range(.Cells(noofusedrows + 1, 1), .Cells(noofusedrows + 1, 10)).BorderAround , ExlBorderAround.xlThin, ExlBorderAround.xlColorIndexAutomatic, vbBlack
+
+.PrintOut 'To print out the selection
+
+
+End With
+
+
+
+
+End Sub
+
+
+Private Sub CmdExit_Click()
+
+End
+
+End Sub
+
+Private Sub CmdIn_Click()
+Dim hex_val As String
+
+Dim StockValue
+AdoStock.Recordset.Fields("In") = InputBox("Enter Stock In")
+StockValue = Val(AdoStock.Recordset.Fields("In")) + Val(AdoInventory.Recordset.Fields("Stock"))
+AdoInventory.Recordset.Fields("Stock") = Str(StockValue)
+
+
+AdoInventory.Recordset.Update
+AdoStock.Recordset.Update
+
+
+End Sub
+
+
+
+Private Sub cmdNew_Click()
+'Add new item to stock
+Dim MsgInstr As Integer
+MsgInstr = MsgBox("Have you selected one item from Stock List? If YES, Click OK to Proceed", vbYesNoCancel + vbQuestion, "Select Item")
+If MsgInstr = 6 Then
+Timer4.Enabled = True
+Else
+Timer4.Enabled = False
+
+End If
+
+
+End Sub
+
+Private Sub Cmdout_Click()
+'Enter total item out
+Dim StockValue
+
+AdoStock.Recordset.Fields("Out") = InputBox("Enter Stock Out")
+
+StockValue = Val(AdoInventory.Recordset.Fields("Stock")) - Val(AdoStock.Recordset.Fields("Out"))
+AdoInventory.Recordset.Fields("Stock") = Str(StockValue)
+
+AdoInventory.Recordset.Update
+AdoStock.Recordset.Update
+
+
+End Sub
+
+Private Sub CmdSearch_Click()
+
+
+'Search for items using SQL query
+
+Dim SearchString1, SearchString2 As String
+SearchString1 = ComboBrand.Text
+SearchString2 = ComboCategory.Text
+
+If ComboBrand.Text <> "All Brands" And ComboCategory.Text <> "All Categories" Then
+
+AdoInventory.RecordSource = "SELECT * FROM Inventory WHERE Brand='" & SearchString1 & "' and Category='" & SearchString2 & "'"
+
+
+ElseIf ComboBrand.Text = "All Brands" And ComboCategory.Text <> "All Categories" Then
+
+AdoInventory.RecordSource = "SELECT * FROM Inventory WHERE Category='" & SearchString2 & "'"
+
+ElseIf ComboBrand.Text <> "All Brands" And ComboCategory.Text = "All Categories" Then
+AdoInventory.RecordSource = "SELECT * FROM Inventory WHERE Brand='" & SearchString1 & "'"
+
+ElseIf ComboBrand.Text = "All Brands" And ComboCategory.Text = "All Categories" Then
+
+AdoInventory.RecordSource = "SELECT * FROM Inventory"
+
+End If
+AdoInventory.Refresh
+'Formatting DataInventory (DataGrid)
+With DataInventory
+.Columns(0).Width = 2000 'Setting width for first column
+.Columns(1).Width = 1500
+.Columns(2).Width = 2500
+.Columns(3).Width = 2000
+.Columns(4).Width = 1200
+.Columns(5).Width = 1100
+.Columns(5).Caption = "Unit Cost" 'Set caption of column 8
+.Columns(6).Width = 1200
+.Columns(6).Caption = "Total Cost"
+
+End With
+
+End Sub
+
+Private Sub CmdView_Click()
+'View all items
+AdoInventory.RecordSource = "SELECT * FROM Inventory"
+AdoInventory.Refresh
+
+End Sub
+
+Private Sub Command2_Click()
+
+AdoInventory.Recordset.Update
+
+End Sub
+
+Private Sub Command3_Click()
+AdoInventory.Recordset.Delete
+End Sub
+
+Private Sub Command4_Click()
+If AdoStock.Recordset.BOF = False Then
+
+AdoStock.Recordset.Delete
+
+Else
+MsgBox ("No Item to Delete")
+End If
+
+End Sub
+
+Private Sub Command5_Click()
+AdoInventory.Refresh.Refresh
+End Sub
+
+
+Private Sub ComboBrand_DropDown()
+Timer1.Enabled = False
+
+
+
+End Sub
+
+Private Sub ComboCategory_DropDown()
+Dim i, j As Integer
+Do Until i = ComboCategory.ListCount
+For j = 1 To ComboCategory.ListCount - i - 1
+If ComboCategory.List(j + i) = ComboCategory.List(i) Then
+
+ComboCategory.RemoveItem j + i
+
+End If
+Next
+
+
+i = i + 1
+
+Loop
+End Sub
+
+
+Private Sub Command1_Click()
+Dim r, nrow As Integer
+Dim mysum As Double
+
+nrow = MSFlexiGrid1.Rows
+For r = 0 To nrow - 1
+mysum = mysum + Val(MSFlexiGrid1.TextMatrix(nrow, 9))
+Next
+
+End Sub
+
+Private Sub DataInventory_AfterUpdate()
+If AdoInventory.Recordset.Fields("CPU") <> "" Then
+
+Dim TotalCost As Integer
+TotalCost = Val(AdoInventory.Recordset.Fields("CPU")) * Val(AdoInventory.Recordset.Fields("Stock"))
+AdoInventory.Recordset.Fields("TCost") = Str(TotalCost)
+Else
+
+AdoInventory.Recordset.Fields("TCost") = ""
+End If
+
+End Sub
+
+Private Sub DataInventory_DblClick()
+If AdoInventory.Recordset.Fields("CPU") <> "" Then
+
+Dim TotalCost As Integer
+TotalCost = Val(AdoInventory.Recordset.Fields("CPU")) * Val(AdoInventory.Recordset.Fields("Stock"))
+AdoInventory.Recordset.Fields("TCost") = Str(TotalCost)
+Else
+
+AdoInventory.Recordset.Fields("TCost") = ""
+End If
+'To load all brands into comboBrand
+
+'To load all Categories into comboCategory
+
+
+
+Do Until AdoInventory.Recordset.EOF
+ReDim B(i), C(j) As String
+
+
+B(i) = AdoInventory.Recordset.Fields("Brand")
+C(j) = AdoInventory.Recordset.Fields("Category")
+
+ComboBrand.AddItem B(i)
+ComboCategory.AddItem C(j)
+
+
+AdoInventory.Recordset.MoveNext
+
+
+Loop
+AdoInventory.Recordset.MoveFirst
+End Sub
+
+
+Private Sub DataStock_Click()
+Dim TotalCost As Integer
+If AdoStock.Recordset.Fields("Out") <> "" Then
+TotalCost = Val(AdoStock.Recordset.Fields("CPU")) * Val(AdoStock.Recordset.Fields("Out"))
+AdoStock.Recordset.Fields("TCost") = Str(TotalCost)
+
+End If
+End Sub
+
+Private Sub DataStock_DblClick()
+'To populate the MSFlexiGrid with data from Adostock in different columns
+'whenever the user clicks the row in dataStock
+MSFlexGrid1.Visible = True
+
+
+Dim DateStr, CategoryStr, BrandStr, MoNumStr, ItemStr, OutStr, InString, BranchStr, CostStr, TCostStr, AllCostStr, linetext As String
+Dim AllCost As Double
+
+
+DateStr = AdoStock.Recordset.Fields("Date") 'To assign the value in Date field to DateStr
+CategoryStr = AdoStock.Recordset.Fields("Category")
+BrandStr = AdoStock.Recordset.Fields("Brand")
+MoNumStr = AdoStock.Recordset.Fields("Model Number")
+ItemStr = AdoStock.Recordset.Fields("Item Description")
+OutStr = AdoStock.Recordset.Fields("Out")
+InStrng = AdoStock.Recordset.Fields("In")
+BranchStr = AdoStock.Recordset.Fields("Branch")
+CostStr = AdoStock.Recordset.Fields("CPU")
+TCostStr = AdoStock.Recordset.Fields("TCost")
+AllCost = AllCost + Val(TCostStr)
+AllCostStr = Str(AllCost)
+
+
+linetext = DateStr & vbTab & CategoryStr & vbTab & BrandStr & vbTab & _
+MoNumStr & vbTab & ItemStr & vbTab & InStrng & vbTab & OutStr & vbTab & BranchStr & vbTab & _
+CostStr & vbTab & TCostStr & vbTab & AllCostStr
+
+MSFlexGrid1.ColWidth(0) = 1200 'sets the first column width to 1000.
+MSFlexGrid1.ColWidth(1) = 1500 'sets the Second column width to 2500.
+MSFlexGrid1.ColWidth(2) = 1500 'sets the Third column width to 1500.
+MSFlexGrid1.ColWidth(3) = 1600 'sets the Fourth column width to 1600.
+MSFlexGrid1.ColWidth(4) = 2000 'sets the Fifth column width to 3000.
+MSFlexGrid1.ColWidth(5) = 500 'sets the Sixth column width to 2000.
+MSFlexGrid1.ColWidth(6) = 500 'sets the Seven column width to 500.
+MSFlexGrid1.ColWidth(7) = 600 'sets the Seven column width to 1000.
+MSFlexGrid1.ColWidth(8) = 800 'sets the Seven column width to 1000.
+MSFlexGrid1.ColWidth(9) = 600 'sets the Seven column width to 1000.
+
+'To set columns alignments
+Dim ColAlign As Integer
+For ColAlign = 0 To 9
+
+MSFlexGrid1.ColAlignment(ColAlign) = flexAlignLeftTop
+
+Next
+
+MSFlexGrid1.AddItem linetext
+
+AdoStock.Recordset.Update
+End Sub
+
+
+Private Sub Form_Load()
+
+'To connect to MS Access database inventory_br.mdb
+AdoInventory.ConnectionString = " Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Documents and Settings\Zenitservice\My Documents\Liew Folder\Bunga Raya\inventory_br.mdb;Persist Security Info=False"
+AdoInventory.RecordSource = "SELECT * FROM Inventory"
+AdoInventory.Refresh
+Set DataInventory.DataSource = AdoInventory
+
+'To connect to MS Access database inventory_br.mdb
+AdoStock.ConnectionString = " Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Documents and Settings\Zenitservice\My Documents\Liew Folder\Bunga Raya\inventory_br.mdb;Persist Security Info=False"
+AdoStock.RecordSource = "SELECT * FROM Stock"
+AdoStock.Refresh
+Set DataStock.DataSource = AdoStock
+
+
+'To set the alignment of the windows to centre of screen
+Left = (Screen.Width - Width) \ 2
+Top = (Screen.Height - Height) \ 2
+
+'To set the alignment of the datagrid to centre of Form
+
+DataInventory.Left = (Form1.Width - DataInventory.Width) \ 2
+DataStock.Left = (Form1.Width - DataStock.Width) \ 2
+
+
+
+'To load all brands into comboBrand
+ComboBrand.Text = "All Brands"
+ComboBrand.AddItem "All Brands"
+
+
+'To load all Categories into comboCategory
+ComboCategory.Text = "All Categories"
+ComboCategory.AddItem "All Categories"
+
+Do Until AdoInventory.Recordset.EOF
+ReDim B(i), C(j) As String
+
+
+B(i) = AdoInventory.Recordset.Fields("Brand")
+C(j) = AdoInventory.Recordset.Fields("Category")
+
+ComboBrand.AddItem B(i)
+ComboCategory.AddItem C(j)
+
+
+AdoInventory.Recordset.MoveNext
+
+
+Loop
+AdoInventory.Recordset.MoveFirst
+
+
+
+'Formatting DataInventory (DataGrid)
+With DataInventory
+.Columns(0).Width = 2000 'Setting width for first column
+.Columns(1).Width = 1500
+.Columns(2).Width = 2500
+.Columns(3).Width = 2000
+.Columns(4).Width = 1200
+.Columns(5).Width = 1100
+.Columns(5).Caption = "Unit Cost" 'Set caption of column 8
+.Columns(6).Width = 1200
+.Columns(6).Caption = "Total Cost"
+
+End With
+
+
+'Formatting DataStock (DataGrid)
+With DataStock
+
+.Columns(0).Width = 1500 'Setting width for first column
+.Columns(1).Width = 2000
+.Columns(2).Width = 1500
+.Columns(3).Width = 2500
+.Columns(4).Width = 1800
+.Columns(5).Width = 600
+.Columns(6).Width = 600
+.Columns(7).Width = 1100
+.Columns(8).Width = 1100
+.Columns(8).Caption = "Unit Cost" 'Set caption of column 8
+.Columns(9).Width = 1200
+.Columns(9).Caption = "Total Cost"
+End With
+
+End Sub
+
+
+'Add item brand to combo box
+
+Private Sub Timer1_Timer()
+Dim i, j As Integer
+Do Until i = ComboBrand.ListCount
+For j = 1 To ComboBrand.ListCount - i - 1
+If ComboBrand.List(j + i) = ComboBrand.List(i) Then
+
+ComboBrand.RemoveItem j + i
+
+End If
+Next
+
+i = i + 1
+
+Loop
+
+End Sub
+
+Private Sub Timer2_Timer()
+
+'Add category to combo box
+
+Dim i, j As Integer
+Do Until i = ComboCategory.ListCount
+For j = 1 To ComboCategory.ListCount - i - 1
+If ComboCategory.List(j + i) = ComboCategory.List(i) Then
+
+ComboCategory.RemoveItem j + i ' To remove duplicated items
+
+End If
+Next
+
+
+i = i + 1
+
+Loop
+End Sub
+
+Private Sub Timer3_Timer()
+Timer1.Enabled = False
+Timer2.Enabled = False
+Timer3.Enabled = False
+End Sub
+
+Private Sub Timer4_Timer()
+'To add items to Ado Stock
+AdoStock.Recordset.AddNew
+AdoStock.Recordset.Fields("Date") = Format(Date, "dd/mm/yyyy")
+AdoStock.Recordset.Fields("Category") = AdoInventory.Recordset.Fields("Category")
+AdoStock.Recordset.Fields("Brand") = AdoInventory.Recordset.Fields("Brand")
+AdoStock.Recordset.Fields("Item Description") = AdoInventory.Recordset.Fields("Item Description")
+AdoStock.Recordset.Fields("Model Number") = AdoInventory.Recordset.Fields("Model Number")
+AdoStock.Recordset.Fields("CPU") = AdoInventory.Recordset.Fields("CPU")
+AdoStock.Recordset.Update
+Timer4.Enabled = False
+
+
+End Sub
+
+#VB6 
