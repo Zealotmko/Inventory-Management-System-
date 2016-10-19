@@ -1,6 +1,83 @@
 
 Inventory-Management-System   Creat with Visual Basic Program  :)   
 
+
+
+
+'To connect AdoStock to MS Access database inventory_br.mdb
+AdoStock.ConnectionString = " Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Documents and Settings\Zenitservice\My Documents\Liew Folder\Bunga Raya\inventory_br.mdb;Persist Security Info=False"
+AdoStock.RecordSource = "SELECT * FROM Stock"
+AdoStock.Refresh
+Set DataStock.DataSource = AdoStock
+
+
+Private Sub DataInventory_DblClick()
+If AdoInventory.Recordset.Fields("CPU") <> "" Then
+
+Dim TotalCost As Integer
+TotalCost = Val(AdoInventory.Recordset.Fields("CPU")) * Val(AdoInventory.Recordset.Fields("Stock"))
+AdoInventory.Recordset.Fields("TCost") = Str(TotalCost)
+Else
+
+AdoInventory.Recordset.Fields("TCost") = ""
+End If
+'To load all brands into comboBrand
+'To load all Categories into comboCategory
+
+Do Until AdoInventory.Recordset.EOF
+ReDim B(i), C(j) As String
+
+B(i) = AdoInventory.Recordset.Fields("Brand")
+C(j) = AdoInventory.Recordset.Fields("Category")
+
+ComboBrand.AddItem B(i)
+ComboCategory.AddItem C(j)
+
+AdoInventory.Recordset.MoveNext
+
+Loop
+AdoInventory.Recordset.MoveFirst
+End Sub
+ 
+
+We also need to write the code to search for the items once they are entered into the inventory table. The code is as follows:
+
+'Search for items using SQL query
+
+Dim SearchString1, SearchString2 As String
+SearchString1 = ComboBrand.Text
+SearchString2 = ComboCategory.Text
+
+If ComboBrand.Text <> "All Brands" And ComboCategory.Text <> "All Categories" Then
+
+AdoInventory.RecordSource = "SELECT * FROM Inventory WHERE Brand='" & SearchString1 & "' and Category='" & SearchString2 & "'"
+
+ElseIf ComboBrand.Text = "All Brands" And ComboCategory.Text <> "All Categories" Then
+
+AdoInventory.RecordSource = "SELECT * FROM Inventory WHERE Category='" & SearchString2 & "'"
+
+ElseIf ComboBrand.Text <> "All Brands" And ComboCategory.Text = "All Categories" Then
+AdoInventory.RecordSource = "SELECT * FROM Inventory WHERE Brand='" & SearchString1 & "'"
+
+ElseIf ComboBrand.Text = "All Brands" And ComboCategory.Text = "All Categories" Then
+
+AdoInventory.RecordSource = "SELECT * FROM Inventory"
+
+End If
+AdoInventory.Refresh
+
+Next, we write code to entering new item in DataStock table. The code is as follows:
+
+'To add items to Ado Stock
+AdoStock.Recordset.AddNew
+AdoStock.Recordset.Fields("Date") = Format(Date, "dd/mm/yyyy")
+AdoStock.Recordset.Fields("Category") = AdoInventory.Recordset.Fields("Category")
+AdoStock.Recordset.Fields("Brand") = AdoInventory.Recordset.Fields("Brand")
+AdoStock.Recordset.Fields("Item Description") = AdoInventory.Recordset.Fields("Item Description")
+AdoStock.Recordset.Fields("Model Number") = AdoInventory.Recordset.Fields("Model Number")
+AdoStock.Recordset.Fields("CPU") = AdoInventory.Recordset.Fields("CPU")
+AdoStock.Recordset.Update
+
 'To set border styles for Excel
 Private Enum ExlBorderAround
 xlHairline = 1
